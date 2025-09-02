@@ -17,27 +17,39 @@ export class PostsService {
   ) {}
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
-    // Create a new post instance to trigger slug generation
-    const post = this.postRepository.create(createPostDto);
-
-    // Check if slug already exists
-    const existingPost = await this.postRepository.findOne({
-      where: { slug: post.slug },
-    });
-
-    if (existingPost) {
-      // Add timestamp to make slug unique
-      const timestamp = Date.now();
-      post.slug = `${post.slug}-${timestamp}`;
-    }
-
     try {
+      // Set default publishedAt to current Jakarta time if not provided
+      const postData = {
+        ...createPostDto,
+        publishedAt: createPostDto.publishedAt || this.getJakartaTime(),
+      };
+
+      // Create a new post instance to trigger slug generation
+      const post = this.postRepository.create(postData);
+
+      // Ensure unique slug
+      post.slug = await this.generateUniqueSlug(post.slug);
+
       return await this.postRepository.save(post);
     } catch (error) {
+      // Handle specific database constraint errors
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-        throw new ConflictException('A post with this slug already exists');
+        //error 409
+        throw new ConflictException(
+          `A post with the title "${createPostDto.title}" already exists or creates a conflicting slug. Please try a different title.`
+        );
       }
-      throw error;
+
+      // Handle validation errors
+      if (error.name === 'QueryFailedError') {
+        throw new ConflictException(`Unable to create post: ${error.message}`);
+      }
+
+      // Log unexpected errors for debugging
+      console.error('Unexpected error creating post:', error);
+      throw new ConflictException(
+        'Unable to create post due to a conflict. Please try again with a different title.'
+      );
     }
   }
 
@@ -61,40 +73,48 @@ export class PostsService {
   }
 
   async update(id: number, updatePostDto: UpdatePostDto): Promise<Post> {
-    const post = await this.findOne(id);
+    try {
+      const post = await this.findOne(id);
 
-    // If title is being updated, regenerate slug
-    if (updatePostDto.title && updatePostDto.title !== post.title) {
-      const tempPost = this.postRepository.create({
-        ...post,
-        ...updatePostDto,
-      });
+      // If title is being updated, regenerate slug
+      if (updatePostDto.title && updatePostDto.title !== post.title) {
+        const tempPost = this.postRepository.create({
+          ...post,
+          ...updatePostDto,
+        });
 
-      // Check if new slug already exists
-      const existingPost = await this.postRepository.findOne({
-        where: { slug: tempPost.slug },
-      });
+        // Generate unique slug for the new title
+        const uniqueSlug = await this.generateUniqueSlugForUpdate(
+          tempPost.slug,
+          id
+        );
 
-      if (existingPost && existingPost.id !== id) {
-        // Add timestamp to make slug unique
-        const timestamp = Date.now();
-        tempPost.slug = `${tempPost.slug}-${timestamp}`;
+        // Update the post object
+        Object.assign(post, updatePostDto);
+        post.slug = uniqueSlug;
+      } else {
+        Object.assign(post, updatePostDto);
       }
 
-      // Update the post object directly since slug is not in DTO
-      Object.assign(post, updatePostDto);
-      post.slug = tempPost.slug;
-    } else {
-      Object.assign(post, updatePostDto);
-    }
-
-    try {
       return await this.postRepository.save(post);
     } catch (error) {
+      // Handle specific database constraint errors
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-        throw new ConflictException('A post with this slug already exists');
+        throw new ConflictException(
+          `Unable to update post: The title "${updatePostDto.title}" conflicts with an existing post. Please try a different title.`
+        );
       }
-      throw error;
+
+      // Handle validation errors
+      if (error.name === 'QueryFailedError') {
+        throw new ConflictException(`Unable to update post: ${error.message}`);
+      }
+
+      // Log unexpected errors for debugging
+      console.error('Unexpected error updating post:', error);
+      throw new ConflictException(
+        'Unable to update post due to a conflict. Please try again.'
+      );
     }
   }
 
@@ -123,5 +143,77 @@ export class PostsService {
     return await this.postRepository.find({
       order: { createdAt: 'DESC' },
     });
+  }
+
+  // Helper method to generate a unique slug
+  private async generateUniqueSlug(baseSlug: string): Promise<string> {
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+
+    // Keep checking until we find a unique slug
+    while (await this.slugExists(uniqueSlug)) {
+      uniqueSlug = `${baseSlug}-${counter}`;
+      counter++;
+
+      // Prevent infinite loops (safety check)
+      if (counter > 100) {
+        uniqueSlug = `${baseSlug}-${Date.now()}`;
+        break;
+      }
+    }
+
+    return uniqueSlug;
+  }
+
+  // Helper method to check if slug exists
+  private async slugExists(slug: string): Promise<boolean> {
+    const existingPost = await this.postRepository.findOne({
+      where: { slug },
+    });
+    return !!existingPost;
+  }
+
+  // Helper method to generate unique slug for updates (excludes current post)
+  private async generateUniqueSlugForUpdate(
+    baseSlug: string,
+    excludeId: number
+  ): Promise<string> {
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+
+    // Keep checking until we find a unique slug (excluding the current post)
+    while (await this.slugExistsExcludingId(uniqueSlug, excludeId)) {
+      uniqueSlug = `${baseSlug}-${counter}`;
+      counter++;
+
+      // Prevent infinite loops (safety check)
+      if (counter > 100) {
+        uniqueSlug = `${baseSlug}-${Date.now()}`;
+        break;
+      }
+    }
+
+    return uniqueSlug;
+  }
+
+  // Helper method to check if slug exists excluding a specific ID
+  private async slugExistsExcludingId(
+    slug: string,
+    excludeId: number
+  ): Promise<boolean> {
+    const existingPost = await this.postRepository.findOne({
+      where: { slug },
+    });
+    return !!existingPost && existingPost.id !== excludeId;
+  }
+
+  // Helper method to get current time in Jakarta timezone (GMT+7)
+  private getJakartaTime(): Date {
+    const now = new Date();
+    // Jakarta is GMT+7, so add 7 hours (7 * 60 * 60 * 1000 milliseconds)
+    const jakartaOffset = 7 * 60 * 60 * 1000;
+    const utcTime = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
+    const jakartaTime = new Date(utcTime + jakartaOffset);
+    return jakartaTime;
   }
 }

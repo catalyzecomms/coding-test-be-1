@@ -44,7 +44,7 @@ export class PostsController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.NO_CONTENT) // bandwith efficiency
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.postsService.remove(id);
   }

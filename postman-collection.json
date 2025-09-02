@@ -17,7 +17,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"My First Blog Post\",\n  \"content\": \"This is the content of my first blog post. It contains some interesting information about NestJS and TypeORM.\",\n  \"publishedAt\": \"2024-01-15T10:00:00Z\"\n}"
+          "raw": "{\n  \"title\": \"My First Blog Post\",\n  \"content\": \"This is the content of my first blog post. It contains some interesting information about NestJS and TypeORM.\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/posts",
@@ -74,7 +74,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"Updated Blog Post Title\",\n  \"content\": \"This is the updated content of my blog post.\",\n  \"publishedAt\": \"2024-01-16T12:00:00Z\"\n}"
+          "raw": "{\n  \"title\": \"Updated Blog Post Title\",\n  \"content\": \"This is the updated content of my blog post.\"\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/posts/1",
