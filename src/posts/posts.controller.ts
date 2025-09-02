@@ -13,76 +13,100 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
   ApiParam,
   ApiBody,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PostResponseDto } from './dto/post-response.dto';
 import { Post as PostEntity } from './entities/post.entity';
+import {
+  ApiCommonResponses,
+  ApiNotFoundPostResponse,
+  ApiConflictPostResponse,
+} from '../common/decorators/api-responses.decorator';
+import {
+  ErrorResponseDto,
+  ValidationErrorResponseDto,
+  ConflictErrorResponseDto,
+} from '../common/dto/error-response.dto';
 
 @ApiTags('posts')
+@ApiExtraModels(
+  PostResponseDto,
+  ErrorResponseDto,
+  ValidationErrorResponseDto,
+  ConflictErrorResponseDto
+)
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new post' })
-  @ApiBody({ type: CreatePostDto })
-  @ApiResponse({
-    status: 201,
+  @ApiOperation({
+    summary: 'Create a new post',
     description:
-      'Post created successfully (publishedAt defaults to Jakarta time)',
-    type: PostEntity,
+      'Creates a new post with auto-generated slug. PublishedAt defaults to Jakarta time if not provided.',
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - validation failed',
+  @ApiBody({ type: CreatePostDto })
+  @ApiCreatedResponse({
+    description: 'Post created successfully',
+    type: PostResponseDto,
   })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflict - title creates duplicate slug',
-  })
+  @ApiCommonResponses()
+  @ApiConflictPostResponse()
   async create(@Body() createPostDto: CreatePostDto): Promise<PostEntity> {
     return await this.postsService.create(createPostDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all active posts' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of all active posts',
-    type: [PostEntity],
+  @ApiOperation({
+    summary: 'Get all active posts',
+    description:
+      'Retrieves all active posts ordered by creation date (newest first)',
   })
+  @ApiOkResponse({
+    description: 'List of all active posts',
+    type: [PostResponseDto],
+  })
+  @ApiCommonResponses()
   async findAll(): Promise<PostEntity[]> {
     return await this.postsService.findAll();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a post by ID' })
+  @ApiOperation({
+    summary: 'Get a post by ID',
+    description: 'Retrieves a specific post by its unique identifier',
+  })
   @ApiParam({
     name: 'id',
     type: 'number',
     description: 'Post ID',
     example: 1,
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Post found',
-    type: PostEntity,
+    type: PostResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post not found',
-  })
+  @ApiCommonResponses()
+  @ApiNotFoundPostResponse()
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<PostEntity> {
     return await this.postsService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a post by ID' })
+  @ApiOperation({
+    summary: 'Update a post by ID',
+    description:
+      'Updates a post. If title is changed, slug will be automatically regenerated.',
+  })
   @ApiParam({
     name: 'id',
     type: 'number',
@@ -90,23 +114,13 @@ export class PostsController {
     example: 1,
   })
   @ApiBody({ type: UpdatePostDto })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Post updated successfully',
-    type: PostEntity,
+    type: PostResponseDto,
   })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - validation failed',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Post not found',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflict - title creates duplicate slug',
-  })
+  @ApiCommonResponses()
+  @ApiNotFoundPostResponse()
+  @ApiConflictPostResponse()
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostDto: UpdatePostDto
@@ -116,43 +130,43 @@ export class PostsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Soft delete a post by ID' })
+  @ApiOperation({
+    summary: 'Soft delete a post by ID',
+    description:
+      'Soft deletes a post by setting isActive to false. The post data is preserved.',
+  })
   @ApiParam({
     name: 'id',
     type: 'number',
     description: 'Post ID',
     example: 1,
   })
-  @ApiResponse({
-    status: 204,
+  @ApiNoContentResponse({
     description: 'Post deleted successfully (soft delete)',
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post not found',
-  })
+  @ApiCommonResponses()
+  @ApiNotFoundPostResponse()
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.postsService.remove(id);
   }
 
-  // Additional endpoint to get post by slug
   @Get('slug/:slug')
-  @ApiOperation({ summary: 'Get a post by slug' })
+  @ApiOperation({
+    summary: 'Get a post by slug',
+    description: 'Retrieves a post using its URL-friendly slug identifier',
+  })
   @ApiParam({
     name: 'slug',
     type: 'string',
-    description: 'Post slug',
+    description: 'Post slug (URL-friendly identifier)',
     example: 'my-first-blog-post',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Post found',
-    type: PostEntity,
+    type: PostResponseDto,
   })
-  @ApiResponse({
-    status: 404,
-    description: 'Post not found',
-  })
+  @ApiCommonResponses()
+  @ApiNotFoundPostResponse()
   async findBySlug(@Param('slug') slug: string): Promise<PostEntity> {
     return await this.postsService.findBySlug(slug);
   }
