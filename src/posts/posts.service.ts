@@ -48,7 +48,7 @@ export class PostsService {
       // Log unexpected errors for debugging
       console.error('Unexpected error creating post:', error);
       throw new ConflictException(
-        'Unable to create post due to a conflict. Please try again with a different title.'
+        'Unable to create post. Please try again with a different title.'
       );
     }
   }
