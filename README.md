@@ -2,26 +2,6 @@
 
 A complete NestJS Posts API with CRUD operations, TypeORM, SQLite database, and Swagger documentation.
 
-## Features
-
-- ✅ Complete CRUD operations for Posts
-- ✅ Auto-generated slugs from titles
-- ✅ Soft delete functionality
-- ✅ SQLite database with TypeORM
-- ✅ Input validation with class-validator
-- ✅ Swagger API documentation
-- ✅ Clean architecture with DTOs and services
-- ✅ Proper error handling
-
-## Tech Stack
-
-- **NestJS** - Node.js framework
-- **TypeORM** - ORM for database operations
-- **SQLite** - Lightweight database
-- **Swagger** - API documentation
-- **class-validator** - Input validation
-- **class-transformer** - Data transformation
-
 ## Installation
 
 ```bash
@@ -34,18 +14,19 @@ npm run start:dev
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/posts` | Create a new post |
-| GET | `/posts` | Get all active posts |
-| GET | `/posts/:id` | Get post by ID |
-| GET | `/posts/slug/:slug` | Get post by slug |
-| PATCH | `/posts/:id` | Update post |
-| DELETE | `/posts/:id` | Soft delete post |
+| Method | Endpoint            | Description          |
+| ------ | ------------------- | -------------------- |
+| POST   | `/posts`            | Create a new post    |
+| GET    | `/posts`            | Get all active posts |
+| GET    | `/posts/:id`        | Get post by ID       |
+| GET    | `/posts/slug/:slug` | Get post by slug     |
+| PATCH  | `/posts/:id`        | Update post          |
+| DELETE | `/posts/:id`        | Soft delete post     |
 
 ## API Documentation
 
 Once the server is running, visit:
+
 - **Application**: http://localhost:3000
 - **Swagger Docs**: http://localhost:3000/api
 
@@ -69,6 +50,7 @@ Import the `postman-collection.json` file into Postman to test all endpoints.
 ## Example Usage
 
 ### Create a Post
+
 ```bash
 curl -X POST http://localhost:3000/posts \
   -H "Content-Type: application/json" \
@@ -80,11 +62,13 @@ curl -X POST http://localhost:3000/posts \
 ```
 
 ### Get All Posts
+
 ```bash
 curl http://localhost:3000/posts
 ```
 
 ### Update a Post
+
 ```bash
 curl -X PATCH http://localhost:3000/posts/1 \
   -H "Content-Type: application/json" \
@@ -95,6 +79,7 @@ curl -X PATCH http://localhost:3000/posts/1 \
 ```
 
 ### Delete a Post (Soft Delete)
+
 ```bash
 curl -X DELETE http://localhost:3000/posts/1
 ```
