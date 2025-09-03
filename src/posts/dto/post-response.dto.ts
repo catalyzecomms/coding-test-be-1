@@ -24,11 +24,11 @@ export class PostResponseDto {
   content?: string;
 
   @ApiProperty({
-    description: 'When the post was published (Jakarta time)',
+    description: 'When the post was published (user-selected date)',
     example: '2025-09-02T17:30:00.000Z',
-    required: false,
+    required: true,
   })
-  publishedAt?: Date;
+  publishedAt: Date;
 
   @ApiProperty({
     description: 'When the post was created',

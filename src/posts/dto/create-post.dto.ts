@@ -25,12 +25,11 @@ export class CreatePostDto {
   content?: string;
 
   @ApiProperty({
-    description:
-      'When the post should be published (optional - defaults to Jakarta time)',
+    description: 'When the post should be published (user must select date)',
     example: '2024-01-15T10:00:00Z',
-    required: false,
+    required: true,
   })
   @IsDateString()
-  @IsOptional()
-  publishedAt?: Date;
+  @IsNotEmpty()
+  publishedAt: Date;
 }

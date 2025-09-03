@@ -19,7 +19,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Posts API')
     .setDescription(
-      'A complete NestJS Posts API with CRUD operations, Jakarta timezone support, and intelligent slug generation'
+      'A complete NestJS Posts API with CRUD operations, user-selected publish dates, and intelligent slug generation'
     )
     .setVersion('1.0')
     .addTag('posts')

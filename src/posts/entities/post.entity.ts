@@ -32,11 +32,11 @@ export class Post {
   isActive: boolean;
 
   @ApiProperty({
-    description: 'When the post was published (Jakarta time)',
-    required: false,
+    description: 'When the post was published (user-selected date)',
+    required: true,
   })
-  @Column({ type: 'datetime', nullable: true })
-  publishedAt?: Date;
+  @Column({ type: 'datetime', nullable: false })
+  publishedAt: Date;
 
   @ApiProperty({ description: 'When the post was created' })
   @CreateDateColumn()

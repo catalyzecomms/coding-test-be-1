@@ -18,14 +18,8 @@ export class PostsService {
 
   async create(createPostDto: CreatePostDto): Promise<Post> {
     try {
-      // Set default publishedAt to current Jakarta time if not provided
-      const postData = {
-        ...createPostDto,
-        publishedAt: createPostDto.publishedAt || this.getJakartaTime(),
-      };
-
       // Create a new post instance to trigger slug generation
-      const post = this.postRepository.create(postData);
+      const post = this.postRepository.create(createPostDto);
 
       // Ensure unique slug
       post.slug = await this.generateUniqueSlug(post.slug);
@@ -205,15 +199,5 @@ export class PostsService {
       where: { slug },
     });
     return !!existingPost && existingPost.id !== excludeId;
-  }
-
-  // Helper method to get current time in Jakarta timezone (GMT+7)
-  private getJakartaTime(): Date {
-    const now = new Date();
-    // Jakarta is GMT+7, so add 7 hours (7 * 60 * 60 * 1000 milliseconds)
-    const jakartaOffset = 7 * 60 * 60 * 1000;
-    const utcTime = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
-    const jakartaTime = new Date(utcTime + jakartaOffset);
-    return jakartaTime;
   }
 }

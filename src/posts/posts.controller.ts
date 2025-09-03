@@ -52,7 +52,7 @@ export class PostsController {
   @ApiOperation({
     summary: 'Create a new post',
     description:
-      'Creates a new post with auto-generated slug. PublishedAt defaults to Jakarta time if not provided.',
+      'Creates a new post with auto-generated slug. User must provide publishedAt date.',
   })
   @ApiBody({ type: CreatePostDto })
   @ApiCreatedResponse({
